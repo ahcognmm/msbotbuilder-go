@@ -41,6 +41,7 @@ type Client interface {
 	Post(url url.URL, activity schema.Activity) error
 	Delete(url url.URL, activity schema.Activity) error
 	Put(url url.URL, activity schema.Activity) error
+	Get(url url.URL, activity schema.Activity) (interface{}, error)
 }
 
 // ConnectorClient implements Client to send HTTP requests to the connector service.
@@ -57,6 +58,15 @@ func NewClient(config *Config) (Client, error) {
 	}
 
 	return &ConnectorClient{*config, cache.AuthCache{}}, nil
+}
+
+func (c *ConnectorClient) Get(target url.URL, activity schema.Activity) (interface{}, error) {
+	req, err := http.NewRequest(http.MethodGet, target.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.sendRequest(req, activity), nil
+
 }
 
 // Post an activity to given URL.
