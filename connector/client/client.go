@@ -65,7 +65,7 @@ func (c *ConnectorClient) Get(target url.URL, activity schema.Activity) (interfa
 	if err != nil {
 		return nil, err
 	}
-	return c.sendRequest(req, activity), nil
+	return c.sendRequestGetData(req, activity)
 
 }
 
@@ -125,6 +125,20 @@ func (client *ConnectorClient) sendRequest(req *http.Request, activity schema.Ac
 	replyClient := &http.Client{}
 
 	return client.checkRespError(replyClient.Do(req))
+}
+
+func (client *ConnectorClient) sendRequestGetData(req *http.Request, activity schema.Activity) (*http.Response, error) {
+	token, err := client.getToken()
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	replyClient := &http.Client{}
+
+	return replyClient.Do(req)
 }
 
 func (client *ConnectorClient) checkRespError(resp *http.Response, err error) error {
