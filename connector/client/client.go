@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -41,7 +42,7 @@ type Client interface {
 	Post(url url.URL, activity schema.Activity) error
 	Delete(url url.URL, activity schema.Activity) error
 	Put(url url.URL, activity schema.Activity) error
-	Get(url url.URL, activity schema.Activity) (interface{}, error)
+	Get(url url.URL, activity schema.Activity) (io.Reader, error)
 }
 
 // ConnectorClient implements Client to send HTTP requests to the connector service.
@@ -60,12 +61,16 @@ func NewClient(config *Config) (Client, error) {
 	return &ConnectorClient{*config, cache.AuthCache{}}, nil
 }
 
-func (c *ConnectorClient) Get(target url.URL, activity schema.Activity) (interface{}, error) {
+func (c *ConnectorClient) Get(target url.URL, activity schema.Activity) (io.Reader, error) {
 	req, err := http.NewRequest(http.MethodGet, target.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	return c.sendRequestGetData(req, activity)
+	res, err := c.sendRequestGetData(req, activity)
+	if err != nil {
+		return nil, c.checkRespError(res, err)
+	}
+	return res.Body, nil
 
 }
 
